@@ -13,61 +13,58 @@ namespace ULMSRepository.Logic
     {
         ULMSLoansContext context;
 
+        #region Constructors.
+
         public LoansRepository()
         {
             context = new ULMSLoansContext();
         }
 
+        #endregion
 
         #region CRUD methods.
 
-        public Response SaveNewLoan(Loan loan)
+        public Loan SaveNewLoan(Loan loan)
         {
             try
             {
                 context.Loans.Add(loan);
                 context.SaveChanges();
-                return new Response
-                {
-                    StatusCode = ResponseCodes.Ok,
-                    Message = ResponseMessages.SaveSuccessfully
-                };
+
+                loan.StatusCode = ResponseCodes.Ok;
+                loan.Message = ResponseMessages.SaveSuccessfully;
             }
             catch (Exception ex)
             {
                 //Log exception details here.
-                return new Response
-                {
-                    StatusCode = ResponseCodes.InternalServerError,
-                    Message = ex.ToString()
-                };
+                loan.Message = ex.ToString();
+                loan.StatusCode = ResponseCodes.InternalServerError;
             }
+
+            return loan;
         }
 
-        public Response EditLoan(Loan loan)
+        public Loan EditLoan(Loan loan)
         {
             try
             {
                 context.Loans.Update(loan);
                 context.SaveChanges();
-                return new Response
-                {
-                    StatusCode = ResponseCodes.Ok,
-                    Message = ResponseMessages.SaveSuccessfully
-                };
+
+                loan.Message = ResponseMessages.Success;
+                loan.StatusCode = ResponseCodes.Ok;
             }
             catch (Exception ex)
             {
                 //Log exception details here.
-                return new Response
-                {
-                    StatusCode = ResponseCodes.InternalServerError,
-                    Message = ex.ToString()
-                };
+                loan.Message = ex.ToString();
+                loan.StatusCode = ResponseCodes.InternalServerError;
             }
+
+            return loan;
         }
 
-        public IEnumerable<Response> GetLoan(int loanId)
+        public IEnumerable<Loan> GetLoan(int loanId)
         {
             try
             {
@@ -88,15 +85,15 @@ namespace ULMSRepository.Logic
                         }
                     };
                 }
-                
+
                 return loans;
             }
             catch (Exception ex)
             {
                 //Log exception details here.
-                return new Response[]
+                return new Loan[]
                 {
-                    new Response
+                    new Loan
                     {
                         StatusCode = ResponseCodes.InternalServerError,
                         Message = ex.ToString()
@@ -105,7 +102,45 @@ namespace ULMSRepository.Logic
             }
         }
 
-        public IEnumerable<Response> GetAllLoans()
+        public IEnumerable<Loan> GetUnpaidLoans()
+        {
+            try
+            {
+                var loans = context.Loans.Where(x => x.FullyPaid == false).ToList();
+                if (loans != null && loans.Any())
+                {
+                    loans[0].StatusCode = ResponseCodes.Ok;
+                    loans[0].Message = ResponseMessages.Success;
+                }
+                else
+                {
+                    return new Loan[]
+                    {
+                        new Loan
+                        {
+                            StatusCode = ResponseCodes.NotFound,
+                            Message = ResponseMessages.LoanNotFound
+                        }
+                    };
+                }
+
+                return loans;
+            }
+            catch (Exception ex)
+            {
+                //Log exception details here.
+                return new Loan[]
+                {
+                    new Loan
+                    {
+                        StatusCode = ResponseCodes.InternalServerError,
+                        Message = ex.ToString()
+                    }
+                };
+            }
+        }
+
+        public IEnumerable<Loan> GetAllLoans()
         {
             try
             {
@@ -132,9 +167,9 @@ namespace ULMSRepository.Logic
             catch (Exception ex)
             {
                 //Log exception details here.
-                return new Response[]
+                return new Loan[]
                 {
-                    new Response
+                    new Loan
                     {
                         StatusCode = ResponseCodes.InternalServerError,
                         Message = ex.ToString()
@@ -143,11 +178,11 @@ namespace ULMSRepository.Logic
             }
         }
 
-        public IEnumerable<Response> GetCustomerLoans(int customerId)
+        public IEnumerable<Loan> GetCustomerLoans(int customerId)
         {
             try
             {
-                var loans = context.Loans.Where(x=>x.CustomerId == customerId).ToList();
+                var loans = context.Loans.Where(x => x.CustomerId == customerId).ToList();
                 if (loans != null && loans.Any())
                 {
                     loans[0].StatusCode = ResponseCodes.Ok;
@@ -170,15 +205,29 @@ namespace ULMSRepository.Logic
             catch (Exception ex)
             {
                 //Log exception details here.
-                return new Response[]
-                {
-                    new Response
-                    {
-                        StatusCode = ResponseCodes.InternalServerError,
+                return new Loan[]
+                {   new Loan{
+                    StatusCode = ResponseCodes.InternalServerError,
                         Message = ex.ToString()
-                    }
+                }
                 };
             }
+        }
+
+        #endregion
+
+        #region private methods
+
+
+        private double GetTotalAmountOwed()
+        {
+            double totalAmount = 0;
+            var loans = GetUnpaidLoans();
+
+            foreach (Loan loan in loans)
+                totalAmount = totalAmount + (loan.TotalAmountToBePaid - loan.AmountPaidThusFar);
+
+            return totalAmount;
         }
 
         #endregion

@@ -7,7 +7,7 @@ namespace ULMSLoansDomain.Entities
         public int CustomerId { get; set; }
         public double Amount { get; set; }
         public double InterestRate { get; set; }
-        public DateTime PaymentDate { get; set; }
+        public DateTime PlannedPaymentDate { get; set; }
         public DateTime ActualPaymentDate { get; set; }
         public bool FullyPaid { get; set; }
         public double Profit { get; set; }

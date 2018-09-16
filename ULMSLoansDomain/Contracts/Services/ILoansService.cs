@@ -9,10 +9,11 @@ namespace ULMSLoansDomain.Contracts.Services
         #region CRUD methods.
 
         Response SaveNewLoan(Loan loan);
-        Response EditLoan(Loan loan);
-        IEnumerable<Response> GetLoan(int loanId);
-        IEnumerable<Response> GetAllLoans();
-        IEnumerable<Response> GetCustomerLoans(int customerId);
+        Loan EditLoan(Loan loan);
+        IEnumerable<Loan> GetLoan(int loanId);
+        IEnumerable<Loan> GetAllLoans();
+        IEnumerable<Loan> GetCustomerLoans(int customerId);
+        double GetCustomerOutStandingBalance(int customerId);
 
         #endregion
     }

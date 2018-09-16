@@ -4,6 +4,7 @@ using System.Linq;
 using ULMSLoansApi.AutoMapper;
 using ULMSLoansApi.Models;
 using ULMSLoansDomain.Contracts.Services;
+using ULMSLookUps.Constants;
 
 namespace ULMSLoansApi.Controllers
 {
@@ -26,7 +27,6 @@ namespace ULMSLoansApi.Controllers
         }
 
         #endregion
-
 
         #region CRUD Actions
 
@@ -54,7 +54,7 @@ namespace ULMSLoansApi.Controllers
             };
         }
 
-        [HttpGet("{id}")]
+        [Route("{loanId}")]
         public JsonResult GetLoan(int loanId)
         {
             var response = loanService.GetLoan(loanId).ToList();
@@ -65,7 +65,8 @@ namespace ULMSLoansApi.Controllers
             };
         }
 
-        [HttpGet("/GetAllLoans/")]
+        //[HttpGet]
+        [Route("/GetAllLoans")]
         public JsonResult GetAllLoans()
         {
             var response = loanService.GetAllLoans().ToList();
@@ -84,6 +85,17 @@ namespace ULMSLoansApi.Controllers
             return new JsonResult(response)
             {
                 StatusCode = response[0].StatusCode
+            };
+        }
+
+        [HttpGet]
+        public JsonResult GetCustomerOutStandingBalance(int customerId)
+        {
+            var response = loanService.GetCustomerOutStandingBalance(customerId);
+            
+            return new JsonResult(response)
+            {
+                StatusCode = response > 0 ? ResponseCodes.Ok : ResponseCodes.NoOutstandingBalanceFound
             };
         }
 

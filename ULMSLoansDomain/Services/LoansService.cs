@@ -1,7 +1,9 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 using ULMSLoansDomain.Contracts.Repository;
 using ULMSLoansDomain.Contracts.Services;
 using ULMSLoansDomain.Entities;
+using ULMSLookUps.Constants;
 using ULMSLookUps.Models;
 
 namespace ULMSLoansDomain.Services
@@ -23,27 +25,74 @@ namespace ULMSLoansDomain.Services
 
         public Response SaveNewLoan(Loan loan)
         {
-            return loansRepository.SaveNewLoan(loan);
+            var computedLoan = CalculateSaveLoanValues(loan);
+            return loansRepository.SaveNewLoan(computedLoan);
         }
 
-        public Response EditLoan(Loan loan)
+        public Loan EditLoan(Loan loan)
         {
+            loan.FullyPaid = loan.TotalAmountToBePaid == loan.AmountPaidThusFar ? true : false;
+
             return loansRepository.EditLoan(loan);
         }
 
-        public IEnumerable<Response> GetLoan(int loanId)
+        public IEnumerable<Loan> GetLoan(int loanId)
         {
             return loansRepository.GetLoan(loanId);
         }
 
-        public IEnumerable<Response> GetAllLoans()
+        public IEnumerable<Loan> GetAllLoans()
         {
             return loansRepository.GetAllLoans();
         }
 
-        public IEnumerable<Response> GetCustomerLoans(int customerId)
+        public IEnumerable<Loan> GetCustomerLoans(int customerId)
         {
             return loansRepository.GetCustomerLoans(customerId);
+        }
+
+        #endregion
+
+        #region Public methods
+
+        public double GetCustomerOutStandingBalance(int customerId)
+        {
+            var customerLoans = GetCustomerLoans(customerId);
+            double totalOutstandingAmount = 0;
+
+            foreach (Loan loan in customerLoans)
+                totalOutstandingAmount = totalOutstandingAmount + (loan.TotalAmountToBePaid - loan.AmountPaidThusFar);
+
+            return totalOutstandingAmount;
+        }
+
+        #endregion
+
+        #region Private methods.
+
+        private Loan CalculateSaveLoanValues(Loan loan)
+        {
+            loan.InterestRate = CalculateInterestRate();
+            loan.InterestValue = CalculateLoanInterest(loan);
+            loan.Profit = CalculateLoanInterest(loan);
+            loan.TotalAmountToBePaid = CalculateTotalAmountToBePaid(loan);
+
+            return loan;
+        }
+
+        private double CalculateInterestRate()
+        {
+            return LoanConstants.Interest;
+        }
+
+        private double CalculateLoanInterest(Loan loan)
+        {
+            return loan.Amount * loan.InterestRate;
+        }
+
+        private double CalculateTotalAmountToBePaid(Loan loan)
+        {
+            return loan.Amount + loan.InterestValue;
         }
 
         #endregion
